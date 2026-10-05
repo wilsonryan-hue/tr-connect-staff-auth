@@ -1,0 +1,13 @@
+{
+  "users": [
+    {
+      "email": "example@treunroc.com",
+      "name": "Example",
+      "role": "OFFICE",
+      "tenantId": "treunroc",
+      "salt": "REPLACE",
+      "hash": "REPLACE"
+    }
+  ],
+  "_comment": "Tenant B: set tenantId to a new id (e.g. acme-contracts). Never commit real salt/hash. Missing tenantId defaults to treunroc."
+}

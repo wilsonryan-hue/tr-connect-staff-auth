@@ -1,0 +1,35 @@
+# fly.toml stub — TR Connect staff-auth
+# Usage (when Ryan has a Fly account): fly launch --copy-config --no-deploy
+# then: fly secrets set CORS_ORIGIN=https://connect.treunroccontracts.com
+# Mount users.json via volume or secret file — never commit real users.json.
+app = "tr-connect-staff-auth"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  HOST = "0.0.0.0"
+  PORT = "8787"
+  CORS_ORIGIN = "https://connect.treunroccontracts.com"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

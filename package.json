@@ -1,0 +1,20 @@
+{
+  "name": "tr-connect-staff-auth",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Treun Roc Connect staff desk. Sign-in and the job book on one Node server. GitHub Pages stays the closed door.",
+  "scripts": {
+    "start": "node src/server.js",
+    "hash-password": "node src/hash-password.js",
+    "verify:desk": "node scripts/prove-desk.mjs",
+    "verify:desk:browser": "node scripts/prove-desk-browser.mjs",
+    "verify:phone": "node scripts/prove-phone-portal.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
+  }
+}

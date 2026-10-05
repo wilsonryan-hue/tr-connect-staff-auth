@@ -1,0 +1,24 @@
+# Render Blueprint — Treun Roc Connect staff-auth (free-tier ready)
+# One service: tr-connect-staff-auth. Set STAFF_AUTH_USERS_JSON on the host.
+# Do not point the public Pages door (live.json api_base) at this service.
+services:
+  - type: web
+    name: tr-connect-staff-auth
+    runtime: node
+    plan: free
+    buildCommand: "echo no-build"
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: CORS_ORIGIN
+        value: "https://connect.treunroccontracts.com"
+      - key: STAFF_AUTH_USERS
+        value: "./users.json"
+      # Prefer STAFF_AUTH_USERS_JSON (secret, the users.json contents) when the file
+      # is not on the disk. Do not commit that value.
+      # Jobs survive a restart only when DATA_DIR is a mounted disk. Render free
+      # web services cannot mount a disk. See DEPLOY.md.
