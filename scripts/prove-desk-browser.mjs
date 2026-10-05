@@ -23,9 +23,13 @@ const BASE = `http://127.0.0.1:${PORT}`
 const tmp = join(tmpdir(), `tr-desk-browser-${process.pid}`)
 mkdirSync(tmp, { recursive: true })
 const usersFile = join(tmp, 'users.json')
-const shotDir = join(REPO, 'qa', 'desk-2026-10-05')
+let shotDir = join(REPO, 'qa', 'desk-2026-10-05')
 const artifactDir = '/opt/cursor/artifacts/qa'
-mkdirSync(shotDir, { recursive: true })
+try {
+  mkdirSync(shotDir, { recursive: true })
+} catch {
+  shotDir = artifactDir
+}
 mkdirSync(artifactDir, { recursive: true })
 
 const { salt, hash } = store.hashPassword(PASSWORD)
@@ -306,7 +310,7 @@ try {
   if (/\bcosts?\b/i.test(clientText) || /\bmargin\b/i.test(clientText) || /\bRyan/.test(clientText)) {
     throw new Error(`client view leaked money language: ${clientText}`)
   }
-  if (!clientText.includes('INV-0001') || !clientText.includes('live')) {
+  if (!clientText.includes('INV-0001') || !clientText.includes('Live')) {
     throw new Error('client view missing the job or issued invoice')
   }
   await shot(page, '20-client-preview')

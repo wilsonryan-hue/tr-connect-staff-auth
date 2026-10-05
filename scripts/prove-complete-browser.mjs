@@ -23,8 +23,13 @@ const BASE = `http://127.0.0.1:${PORT}`
 const tmp = join(tmpdir(), `tr-complete-browser-${process.pid}`)
 mkdirSync(tmp, { recursive: true })
 const usersFile = join(tmp, 'users.json')
-const shotDir = join(REPO, 'qa', 'complete-desk-2026-10-05')
-mkdirSync(shotDir, { recursive: true })
+let shotDir = join(REPO, 'qa', 'complete-desk-2026-10-05')
+try {
+  mkdirSync(shotDir, { recursive: true })
+} catch {
+  shotDir = '/tmp/tr-prove-shots'
+  mkdirSync(shotDir, { recursive: true })
+}
 writeFileSync(join(tmp, 'site-note.txt'), 'site sketch')
 
 const { salt, hash } = store.hashPassword(PASSWORD)
