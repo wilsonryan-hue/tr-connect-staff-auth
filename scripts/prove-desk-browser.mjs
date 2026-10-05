@@ -125,7 +125,7 @@ try {
   await page.getByText('No jobs yet.').waitFor()
   await shot(page, '02-jobs-empty')
 
-  await nav(page, 'Monday').click()
+  await nav(page, 'Money due').click()
   await page.getByText('No live jobs yet.').waitFor()
   if ((await page.locator('[data-screen="monday"]').innerText()).includes('£0')) {
     throw new Error('empty Monday showed a zero')
@@ -270,7 +270,7 @@ try {
   await page.getByRole('button', { name: 'Save job' }).click()
   await page.waitForSelector('[data-screen="job"]')
 
-  await nav(page, 'Monday').click()
+  await nav(page, 'Money due').click()
   await page.locator('[data-monday-row]').waitFor()
   const monday = await page.locator('[data-screen="monday"]').innerText()
   if (!monday.includes('Hexham fit-out') || monday.includes('Other yard')) {
@@ -288,7 +288,7 @@ try {
   await page.waitForSelector('[data-screen="blocked"]')
   if ((await page.content()).includes('Hexham')) throw new Error('signed-out client view showed a job')
 
-  await page.getByRole('button', { name: 'Staff sign in' }).click()
+  await page.getByRole('button', { name: 'Sign in' }).click()
   await page.getByLabel('Work email').fill(EMAIL)
   await page.getByLabel('Password').fill(PASSWORD)
   await page.getByRole('button', { name: 'Enter desk' }).click()
@@ -336,7 +336,7 @@ try {
     contentType: 'application/json',
     body: JSON.stringify({ error: 'Could not load the desk. Check the connection and try again.' }),
   }))
-  await nav(page, 'Monday').click()
+  await nav(page, 'Money due').click()
   await page.getByText('Could not load the desk. Check the connection and try again.').waitFor()
   if (!(await page.locator('[data-screen="monday"]').innerText()).includes('Hexham fit-out')) {
     throw new Error('failed load dropped the last good rows')

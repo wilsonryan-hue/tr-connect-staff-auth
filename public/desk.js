@@ -153,6 +153,43 @@ function field(label, input) {
   return h('label', { class: 'field' }, h('span', null, label), input)
 }
 
+const STATUS_LABEL = {
+  quoted: 'Quoted',
+  live: 'Live',
+  snagging: 'Snagging',
+  done: 'Done',
+  open: 'Open',
+  submitted: 'Submitted',
+  won: 'Won',
+  lost: 'Lost',
+  overdue: 'Overdue',
+  accepted: 'Accepted',
+  draft: 'Draft',
+  'sent-draft': 'Sent draft',
+  issued: 'Issued',
+  credited: 'Credited',
+  pending: 'Pending',
+  paid: 'Paid',
+  read: 'Read',
+  unread: 'Unread',
+}
+
+function pill(status) {
+  const raw = String(status || '')
+  const key = raw.toLowerCase()
+  return h('span', { class: 'pill', 'data-status': key }, STATUS_LABEL[key] || raw)
+}
+
+function markImg(px) {
+  return h('img', {
+    class: 'mark',
+    src: '/tr-mark.svg',
+    width: String(px),
+    height: String(px),
+    alt: '',
+  })
+}
+
 function options(values, current) {
   return values.map(([val, label]) =>
     h('option', { value: val, selected: val === current }, label),
@@ -176,13 +213,29 @@ function shell(...nodes) {
   const key = routeKey(bits)
   const group = (label, items) =>
     h('div', { class: 'nav-group' }, h('p', { class: 'nav-label' }, label), ...navLinks(key, items))
+  const tab = (hash, label, id) =>
+    h('button', {
+      type: 'button',
+      'aria-current': key === id ? 'page' : null,
+      onClick: () => go(hash),
+    }, label)
   return h(
     'div',
     { class: 'desk sheet' },
+    state.menuOpen
+      ? h('button', { type: 'button', class: 'scrim', 'aria-label': 'Close menu', onClick: toggleMenu })
+      : null,
     h(
       'aside',
       { class: state.menuOpen ? 'sidebar open' : 'sidebar', id: 'sidebar' },
-      h('p', { class: 'nav-label' }, 'Treun Roc'),
+      h('a', { class: 'brand', href: '#/' },
+        markImg(36),
+        h('span', { class: 'brand-text' },
+          h('strong', null, 'Treun Roc'),
+          h('span', null, 'Connect'),
+        ),
+      ),
+      h('button', { type: 'button', class: 'ghost close-nav', onClick: toggleMenu }, 'Close'),
       h(
         'nav',
         { 'aria-label': 'Sections' },
@@ -196,7 +249,7 @@ function shell(...nodes) {
         ]),
         group('Money', [
           ['#/statements', 'Finance', 'statements'],
-          ['#/monday', 'Monday', 'monday'],
+          ['#/monday', 'Money due', 'monday'],
           ['#/report', 'Report', 'report'],
           ['#/invoices', 'Invoices', 'invoices'],
           ['#/bills', 'Supplier bills', 'bills'],
@@ -219,7 +272,13 @@ function shell(...nodes) {
       h(
         'header',
         { class: 'top' },
-        h('div', null, h('h1', null, 'Treun Roc Connect'), h('p', null, 'Staff desk')),
+        h('div', { class: 'product' },
+          markImg(32),
+          h('div', null,
+            h('h1', null, 'Treun Roc Connect'),
+            h('p', null, state.me?.name || 'Treun Roc Contracts'),
+          ),
+        ),
         h(
           'div',
           { class: 'row' },
@@ -242,10 +301,10 @@ function shell(...nodes) {
     h(
       'div',
       { class: 'bottombar' },
-      h('button', { type: 'button', onClick: () => go('#/') }, 'Home'),
-      h('button', { type: 'button', onClick: () => go('#/jobs') }, 'Jobs'),
-      h('button', { type: 'button', onClick: () => go('#/mail') }, 'Mail'),
-      h('button', { type: 'button', onClick: () => go('#/statements') }, 'Finance'),
+      tab('#/', 'Home', 'home'),
+      tab('#/jobs', 'Jobs', 'jobs'),
+      tab('#/mail', 'Mail', 'mail'),
+      tab('#/statements', 'Finance', 'statements'),
     ),
   )
 }
@@ -332,6 +391,7 @@ function screenLoading() {
   return h(
     'main',
     { 'data-screen': 'loading', class: 'card' },
+    h('p', { class: 'sr-only' }, 'Loading the desk.'),
     h('div', { class: 'shape w40' }),
     h('div', { class: 'shape' }),
     h('div', { class: 'shape' }),
@@ -352,17 +412,21 @@ function screenFailed() {
 function screenLogin() {
   return h(
     'main',
-    { class: 'wrap sheet', 'data-screen': 'login' },
-    h(
-      'form',
-      { class: 'card', onSubmit: onLogin },
+    { class: 'gate sheet', 'data-screen': 'login' },
+    h('div', { class: 'gate-panel' },
+      markImg(56),
+      h('p', { class: 'eyebrow' }, 'Treun Roc Contracts'),
       h('h1', null, 'Treun Roc Connect'),
-      h('p', { class: 'muted' }, 'Staff sign in'),
-      h('p', null, h('a', { href: '/install' }, 'Add to Home Screen')),
-      field('Work email', h('input', { id: 'email', type: 'email', autocomplete: 'username', required: true })),
-      field('Password', h('input', { id: 'password', type: 'password', autocomplete: 'current-password', required: true })),
-      h('p', { id: 'form-error', class: 'err', role: 'alert', 'data-error': 'login' }, state.authError || ''),
-      h('button', { id: 'login-btn', type: 'submit' }, 'Enter desk'),
+      h('p', { class: 'lede' }, 'Sign in with your work email.'),
+      h(
+        'form',
+        { class: 'card', onSubmit: onLogin },
+        field('Work email', h('input', { id: 'email', type: 'email', autocomplete: 'username', required: true })),
+        field('Password', h('input', { id: 'password', type: 'password', autocomplete: 'current-password', required: true })),
+        h('p', { id: 'form-error', class: 'err', role: 'alert', 'data-error': 'login' }, state.authError || ''),
+        h('button', { id: 'login-btn', type: 'submit' }, 'Enter desk'),
+      ),
+      h('p', { class: 'gate-foot' }, h('a', { href: '/install' }, 'Add to Home Screen')),
     ),
   )
 }
@@ -406,11 +470,15 @@ async function onLogin(ev) {
 function screenBlocked() {
   return h(
     'main',
-    { class: 'wrap sheet', 'data-screen': 'blocked' },
-    h('div', { class: 'card' },
+    { class: 'gate sheet', 'data-screen': 'blocked' },
+    h('div', { class: 'gate-panel' },
+      markImg(56),
+      h('p', { class: 'eyebrow' }, 'Treun Roc Connect'),
       h('h1', null, 'Client view'),
-      h('p', { 'data-blocked': '1' }, "Sign in to see this client's jobs."),
-      h('button', { type: 'button', onClick: () => { location.hash = '#/login' } }, 'Staff sign in'),
+      h('div', { class: 'card' },
+        h('p', { 'data-blocked': '1' }, "Sign in to see this client's jobs."),
+        h('button', { type: 'button', onClick: () => { location.hash = '#/login' } }, 'Sign in'),
+      ),
     ),
   )
 }
@@ -418,7 +486,7 @@ function screenBlocked() {
 function empty(sentence, label, hash) {
   return h(
     'div',
-    { 'data-empty': '1' },
+    { class: 'empty', 'data-empty': '1' },
     h('p', null, sentence),
     h('button', { type: 'button', onClick: () => { location.hash = hash } }, label),
   )
@@ -433,18 +501,18 @@ function screenJobs() {
   const chip = (status, label) =>
     h('button', {
       type: 'button',
-      class: status === active ? '' : 'ghost',
+      class: 'chip',
       'aria-pressed': status === active ? 'true' : 'false',
       onClick: () => { location.hash = status ? `#/jobs?status=${status}` : '#/jobs' },
-    }, label)
+    }, status ? (STATUS_LABEL[status] || label) : label)
   const card = (job) =>
     h(
       'div',
       { class: 'card', 'data-job-card': job.id },
       h('a', { href: `#/jobs/${job.id}` }, job.name),
       h('p', { class: 'muted' }, `${job.client} · ${job.siteAddress}`),
-      h('p', { 'data-status': job.status }, job.status),
-      h('p', null, job.contractSum),
+      pill(job.status),
+      h('p', { class: 'money' }, job.contractSum),
     )
   let board
   if (!all.length) board = empty('No jobs yet.', 'Add job', '#/jobs/new')
@@ -459,8 +527,8 @@ function screenJobs() {
       statuses.map((status) =>
         h(
           'section',
-          { class: 'card' },
-          h('h3', null, status),
+          { class: 'card lane' },
+          h('h3', null, STATUS_LABEL[status] || status),
           ...all.filter((job) => job.status === status).map(card),
           all.some((job) => job.status === status) ? null : h('p', { class: 'muted' }, 'None.'),
         ),
@@ -471,14 +539,14 @@ function screenJobs() {
     'main',
     { 'data-screen': 'jobs' },
     h('div', { class: 'row noprint' }, h('h2', null, 'Jobs'), h('button', { type: 'button', onClick: () => { location.hash = '#/jobs/new' } }, 'Add job')),
-    h('div', { class: 'row noprint' }, chip('', 'All'), ...statuses.map((status) => chip(status, status))),
+    h('div', { class: 'filters noprint' }, chip('', 'All'), ...statuses.map((status) => chip(status, status))),
     board,
   )
 }
 
 function jobForm(job) {
   const status = h('select', { id: 'job-status' }, options(
-    [['quoted', 'quoted'], ['live', 'live'], ['snagging', 'snagging'], ['done', 'done']],
+    [['quoted', 'Quoted'], ['live', 'Live'], ['snagging', 'Snagging'], ['done', 'Done']],
     job?.status || 'quoted',
   ))
   status.value = job?.status || 'quoted'
@@ -556,7 +624,7 @@ function screenJob(id) {
     'main',
     { 'data-screen': 'job' },
     h('p', { class: 'muted' }, h('a', { href: '#/jobs' }, 'Jobs')),
-    h('p', { 'data-status': job.status }, job.status),
+    pill(job.status),
     jobForm(job),
     h(
       'section',
@@ -665,7 +733,7 @@ function jobTenders(job) {
     'section',
     { class: 'card', 'data-job-tenders': '1' },
     h('h2', null, 'Tenders'),
-    h('ul', null, rows.map((tender) => h('li', null, h('a', { href: `#/tenders/${tender.id}` }, tender.title), ` ${tender.status}`))),
+    h('ul', null, rows.map((tender) => h('li', null, h('a', { href: `#/tenders/${tender.id}` }, tender.title), ' ', pill(tender.status)))),
   )
 }
 
@@ -938,7 +1006,7 @@ async function createInvoice(jobId) {
 function screenMonday() {
   const live = (state.book?.jobs || []).filter((job) => job.status === 'live')
   if (!live.length) {
-    return h('main', { 'data-screen': 'monday' }, h('h2', null, 'Monday'), empty('No live jobs yet.', 'Add job', '#/jobs/new'))
+    return h('main', { 'data-screen': 'monday' }, h('h2', null, 'Money due'), empty('No live jobs yet.', 'Add job', '#/jobs/new'))
   }
   const totals = {
     contract: live.reduce((sum, job) => sum + job.money.contractSumPence, 0),
@@ -948,7 +1016,7 @@ function screenMonday() {
   return h(
     'main',
     { 'data-screen': 'monday' },
-    h('h2', null, 'Monday'),
+    h('h2', null, 'Money due'),
     h('p', { class: 'formula' }, 'Live jobs. Review pile lines are not in these totals.'),
     h(
       'table',
@@ -966,7 +1034,7 @@ function screenMonday() {
           h('td', { class: 'num' }, job.money.contractSum),
           h('td', { class: 'num' }, job.money.costs),
           h('td', { class: 'num', 'data-row-margin': job.id }, job.money.margin),
-          h('td', null, job.status),
+          h('td', null, pill(job.status)),
         )),
         h('tr', null,
           h('th', null, 'Total'),
@@ -995,7 +1063,7 @@ function screenInvoices() {
             h('td', null, inv.dateDisplay),
             h('td', null, inv.jobName),
             h('td', { class: 'num' }, inv.gross),
-            h('td', null, inv.status),
+            h('td', null, pill(inv.status)),
           ))),
         )
       : h('div', { 'data-empty': '1' },
@@ -1042,7 +1110,7 @@ function screenInvoice(id) {
           h('p', { 'data-error': 'issued', role: 'alert' }, 'This invoice is issued. Credit it to change the lines.'),
           h('ul', null, inv.lines.map((line) => h('li', null, `${line.description} ${line.net}`))),
         )
-      : h('form', { onSubmit: (ev) => saveInvoice(ev, inv.id) },
+      : h('form', { class: 'card', onSubmit: (ev) => saveInvoice(ev, inv.id) },
           field('Date', h('input', { id: 'inv-date', value: inv.dateDisplay })),
           ...state.editLines.map((line, i) => h('div', { class: 'split' },
             field('Description', h('input', { id: `line-desc-${i}`, value: line.description })),
@@ -1250,7 +1318,7 @@ function screenClient() {
                 h('thead', null, h('tr', null, h('th', null, 'Job'), h('th', null, 'Status'), h('th', null, 'Site'))),
                 h('tbody', null, view.jobs.map((job) => h('tr', null,
                   h('td', null, job.name),
-                  h('td', null, job.status),
+                  h('td', null, pill(job.status)),
                   h('td', null, job.siteAddress),
                 ))),
               )
@@ -1396,7 +1464,7 @@ function screenHome() {
     ['#/quotes', 'Quotes', 'Draft, then accept into a job'],
     ['#/tenders', 'Quick BD', 'Tenders'],
     ['#/approvals', 'Approvals', 'Review pile'],
-    ['#/mail', 'Mail', 'Staff mail'],
+    ['#/mail', 'Mail', 'Messages'],
     ['#/statements', 'Finance', 'Live margin'],
     ['#/invoices', 'Invoices', 'Client invoices'],
     ['#/bills', 'Supplier bills', 'Bills you owe'],
@@ -1408,14 +1476,14 @@ function screenHome() {
     ['#/site', 'Site', 'Site notes'],
     ['#/calendar', 'Calendar', 'Jobs by date'],
     ['#/files', 'Company files', 'Documents on jobs'],
-    ['#/monday', 'Monday', 'Live jobs table'],
-    ['#/client', 'Client view', 'Staff preview'],
+    ['#/monday', 'Money due', 'Live jobs table'],
+    ['#/client', 'Client view', 'Preview a client'],
   ]
   return h(
     'main',
     { 'data-screen': 'home' },
     h('h2', null, 'Home'),
-    h('p', null, `Signed in as ${name}.`),
+    h('p', { class: 'lede' }, `Signed in as ${name}.`),
     h(
       'div',
       { class: 'split' },
@@ -1444,7 +1512,7 @@ function screenHome() {
       h('p', { class: 'muted' }, 'Review pile is not in this figure.'),
       h('p', null, review.length ? `${review.length} review lines, still unallocated.` : 'No lines in the review pile.'),
     ),
-    h('h2', null, 'Open'),
+    h('h2', { class: 'section-label' }, 'Open'),
     h(
       'div',
       { class: 'launchers' },
@@ -1468,7 +1536,7 @@ function screenQuotes() {
             h('td', null, h('a', { href: `#/quotes/${quote.id}` }, quote.number)),
             h('td', null, quote.title),
             h('td', null, quote.client),
-            h('td', null, quote.status),
+            h('td', null, pill(quote.status)),
             h('td', { class: 'num' }, quote.net),
           ))),
         )
@@ -1537,7 +1605,7 @@ function screenQuote(id) {
     h('p', null, `Net ${quote.net}`),
     h('p', null, `${quote.vatLabel} ${quote.vat}`),
     h('p', { class: 'money' }, `Gross ${quote.gross}`),
-    h('p', null, quote.status),
+    pill(quote.status),
     quote.jobId ? h('p', null, h('a', { href: `#/jobs/${quote.jobId}` }, quote.jobName || 'Open job')) : null,
     quoteTenders(quote),
     h('p', { class: 'row noprint' },
@@ -1580,7 +1648,7 @@ function quoteTenders(quote) {
     'section',
     { 'data-quote-tenders': '1' },
     h('h3', null, 'Tenders'),
-    h('ul', null, rows.map((tender) => h('li', null, h('a', { href: `#/tenders/${tender.id}` }, tender.title), ` ${tender.status}`))),
+    h('ul', null, rows.map((tender) => h('li', null, h('a', { href: `#/tenders/${tender.id}` }, tender.title), ' ', pill(tender.status)))),
   )
 }
 
@@ -1597,7 +1665,7 @@ function screenTenders() {
           h('tbody', null, tenders.map((tender) => h('tr', null,
             h('td', null, h('a', { href: `#/tenders/${tender.id}` }, tender.title)),
             h('td', null, tender.client),
-            h('td', null, tender.status),
+            h('td', null, pill(tender.status)),
             h('td', null, tender.dueDateDisplay || ''),
             h('td', null,
               tender.jobId ? h('a', { href: `#/jobs/${tender.jobId}` }, tender.jobName || 'Job') : null,
@@ -1613,7 +1681,7 @@ function screenTenders() {
 
 function tenderForm(tender) {
   const status = h('select', { id: 'tender-status' }, options(
-    [['open', 'open'], ['submitted', 'submitted'], ['won', 'won'], ['lost', 'lost']],
+    [['open', 'Open'], ['submitted', 'Submitted'], ['won', 'Won'], ['lost', 'Lost']],
     tender?.status || 'open',
   ))
   status.value = tender?.status || 'open'
@@ -1830,7 +1898,7 @@ function screenThread(id) {
     h('h2', null, thread.subject),
     h('p', null, `From ${thread.from}`),
     thread.receivedDisplay ? h('p', null, `Received ${thread.receivedDisplay}`) : null,
-    h('p', null, thread.read ? 'Read' : 'Unread'),
+    pill(thread.read ? 'read' : 'unread'),
     h('p', null, thread.body),
     thread.jobId ? h('p', null, h('a', { href: `#/jobs/${thread.jobId}` }, thread.jobName || 'Open job')) : h('p', null, 'No job'),
     h('p', { class: 'row' },
@@ -1897,7 +1965,7 @@ function screenFinance() {
                 h('td', { class: 'num' }, job.money.contractSum),
                 h('td', { class: 'num' }, job.money.costs),
                 h('td', { class: 'num' }, job.money.margin),
-                h('td', null, job.status),
+                h('td', null, pill(job.status)),
               )),
               h('tr', null,
                 h('th', null, 'Total'),
@@ -2005,7 +2073,7 @@ function screenCalendar() {
     { 'data-screen': 'calendar' },
     h('h2', null, 'Calendar'),
     jobs.length
-      ? h('ul', null, jobs.map((job) => h('li', null, `${job.startDateDisplay} `, h('a', { href: `#/jobs/${job.id}` }, job.name), ` ${job.status}`)))
+      ? h('ul', null, jobs.map((job) => h('li', null, `${job.startDateDisplay} `, h('a', { href: `#/jobs/${job.id}` }, job.name), ' ', pill(job.status))))
       : empty('No dated jobs yet.', 'Add', '#/jobs/new'),
   )
 }
@@ -2033,7 +2101,7 @@ function screenReport() {
       'main',
       { 'data-screen': 'report' },
       h('h2', null, 'Report'),
-      h('p', { 'data-empty': '1' }, 'No live jobs yet. When a job is live, this table shows the same contract sum, costs, and margin as the job and Monday.'),
+      h('p', { 'data-empty': '1' }, 'No live jobs yet. When a job is live, this table shows the same contract sum, costs, and margin as the job and Money due.'),
     )
   }
   const totals = {
@@ -2045,7 +2113,7 @@ function screenReport() {
     'main',
     { 'data-screen': 'report' },
     h('h2', null, 'Report'),
-    h('p', null, 'These figures match the job and Monday. Review lines are not included.'),
+    h('p', { class: 'formula' }, 'These figures match the job and Money due. Review lines are not included.'),
     h(
       'table',
       null,
@@ -2062,7 +2130,7 @@ function screenReport() {
           h('td', { class: 'num' }, job.money.contractSum),
           h('td', { class: 'num' }, job.money.costs),
           h('td', { class: 'num', 'data-report-margin': job.id }, job.money.margin),
-          h('td', null, job.status),
+          h('td', null, pill(job.status)),
         )),
         h('tr', null,
           h('th', null, 'Total'),

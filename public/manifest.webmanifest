@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Treun Roc Connect",
   "short_name": "TR Connect",
-  "description": "Treun Roc staff desk. Sign in, then Home.",
+  "description": "Treun Roc Connect. The company desk for Treun Roc Contracts.",
   "lang": "en-GB",
   "start_url": "/",
   "scope": "/",

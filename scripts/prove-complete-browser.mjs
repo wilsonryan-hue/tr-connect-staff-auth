@@ -202,7 +202,7 @@ try {
   await page.getByText('06/10/2026').waitFor()
   await shot(page, '12-calendar')
 
-  await nav(page, 'Monday').click()
+  await nav(page, 'Money due').click()
   await screen(page, 'monday')
   const monday = await page.locator('[data-total-margin]').innerText()
   if (!monday.includes('£100,000.00')) throw new Error(`monday total ${monday}`)

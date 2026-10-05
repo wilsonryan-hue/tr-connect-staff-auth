@@ -158,7 +158,7 @@ try {
   await page.getByRole('button', { name: 'Accept' }).click()
   await screen(page, 'job')
   await page.getByText('Iford fire reinstatement').first().waitFor()
-  if ((await page.locator('[data-status]').first().innerText()) !== 'quoted') throw new Error('accepted quote did not open a quoted job')
+  if ((await page.locator('[data-status]').first().innerText()) !== 'Quoted') throw new Error('accepted quote did not open a quoted job')
 
   await nav(page, 'Quick BD').click()
   await screen(page, 'tenders')
