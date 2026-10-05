@@ -23,9 +23,13 @@ const BASE = `http://127.0.0.1:${PORT}`
 const tmp = join(tmpdir(), `tr-desk-browser-${process.pid}`)
 mkdirSync(tmp, { recursive: true })
 const usersFile = join(tmp, 'users.json')
-const shotDir = join(REPO, 'qa', 'desk-2026-10-05')
+let shotDir = join(REPO, 'qa', 'desk-2026-10-05')
 const artifactDir = '/opt/cursor/artifacts/qa'
-mkdirSync(shotDir, { recursive: true })
+try {
+  mkdirSync(shotDir, { recursive: true })
+} catch {
+  shotDir = artifactDir
+}
 mkdirSync(artifactDir, { recursive: true })
 
 const { salt, hash } = store.hashPassword(PASSWORD)
@@ -125,7 +129,7 @@ try {
   await page.getByText('No jobs yet.').waitFor()
   await shot(page, '02-jobs-empty')
 
-  await nav(page, 'Monday').click()
+  await nav(page, 'Money due').click()
   await page.getByText('No live jobs yet.').waitFor()
   if ((await page.locator('[data-screen="monday"]').innerText()).includes('£0')) {
     throw new Error('empty Monday showed a zero')
@@ -270,7 +274,7 @@ try {
   await page.getByRole('button', { name: 'Save job' }).click()
   await page.waitForSelector('[data-screen="job"]')
 
-  await nav(page, 'Monday').click()
+  await nav(page, 'Money due').click()
   await page.locator('[data-monday-row]').waitFor()
   const monday = await page.locator('[data-screen="monday"]').innerText()
   if (!monday.includes('Hexham fit-out') || monday.includes('Other yard')) {
@@ -288,7 +292,7 @@ try {
   await page.waitForSelector('[data-screen="blocked"]')
   if ((await page.content()).includes('Hexham')) throw new Error('signed-out client view showed a job')
 
-  await page.getByRole('button', { name: 'Staff sign in' }).click()
+  await page.getByRole('button', { name: 'Sign in' }).click()
   await page.getByLabel('Work email').fill(EMAIL)
   await page.getByLabel('Password').fill(PASSWORD)
   await page.getByRole('button', { name: 'Enter desk' }).click()
@@ -306,7 +310,7 @@ try {
   if (/\bcosts?\b/i.test(clientText) || /\bmargin\b/i.test(clientText) || /\bRyan/.test(clientText)) {
     throw new Error(`client view leaked money language: ${clientText}`)
   }
-  if (!clientText.includes('INV-0001') || !clientText.includes('live')) {
+  if (!clientText.includes('INV-0001') || !clientText.includes('Live')) {
     throw new Error('client view missing the job or issued invoice')
   }
   await shot(page, '20-client-preview')
@@ -336,7 +340,7 @@ try {
     contentType: 'application/json',
     body: JSON.stringify({ error: 'Could not load the desk. Check the connection and try again.' }),
   }))
-  await nav(page, 'Monday').click()
+  await nav(page, 'Money due').click()
   await page.getByText('Could not load the desk. Check the connection and try again.').waitFor()
   if (!(await page.locator('[data-screen="monday"]').innerText()).includes('Hexham fit-out')) {
     throw new Error('failed load dropped the last good rows')
